@@ -12,7 +12,7 @@ export interface GPSPosition {
   name: string; // nombre del inspector
   id_zone: string;
   name_zone: string;
-  inspector_type: string; // 'fixed' o 'motorized'
+  inspector_type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta'
   assignment_id: string | null; // ID de la asignación actual (puede ser null)
   batery: string; // porcentaje 0-100
   velocidad: string; // en km/h

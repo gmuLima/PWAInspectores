@@ -86,7 +86,8 @@ export const Header = (props: HeaderProps) => {
         inspectorName={inspectorName}
         location={location}
         isActive={isConnected}
-        inspectorType={inspectorData?.type === 'motorizado' ? 'motorizado' : inspectorData?.type === 'punto_fijo' ? 'fijo' : 'fijo'}
+        inspectorType={inspectorData?.type as 'punto_fijo' | 'fiscalizador' | 'motorizado' | 'bicicleta' | undefined}
+        dni={inspectorData?.dni}
         zone={inspectorData?.currentZone || inspectorData?.zone_name || 'Sin asignación'}
         email={inspectorData?.email}
         phone={inspectorData?.phone}

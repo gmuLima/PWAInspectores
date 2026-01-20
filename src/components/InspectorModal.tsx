@@ -7,7 +7,8 @@ interface InspectorModalProps {
   inspectorName: string;
   location: { lat: number; lng: number; accuracy: number; timestamp: number } | null;
   isActive: boolean;
-  inspectorType?: 'motorizado' | 'fijo';
+  inspectorType?: 'punto_fijo' | 'fiscalizador' | 'motorizado' | 'bicicleta';
+  dni?: string;
   zone?: string;
   email?: string;
   phone?: string;
@@ -20,11 +21,15 @@ export function InspectorModal({
   location,
   isActive,
   inspectorType,
+  dni,
   zone,
 }: InspectorModalProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (!isOpen) return null;
+
+  // Log para debug
+  console.log('🔍 InspectorModal - inspectorType recibido:', inspectorType, 'typeof:', typeof inspectorType);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -64,9 +69,21 @@ export function InspectorModal({
             <h4 className="section-title">Información Básica</h4>
             <div className="info-grid">
               <div className="info-item">
+                <span className="info-label">DNI:</span>
+                <span className="info-value">{dni || 'N/A'}</span>
+              </div>
+              <div className="info-item">
                 <span className="info-label">Tipo de Inspector:</span>
                 <span className="info-value">
-                  {inspectorType === 'motorizado' ? '🏍️ Motorizado' : inspectorType === 'fijo' ? '🚗 Fijo' : 'N/A'}
+                  {(() => {
+                    const type = inspectorType?.trim().toLowerCase();
+                    console.log('🔍 Tipo procesado:', type);
+                    if (type === 'motorizado') return '🏍️ Motorizado';
+                    if (type === 'punto_fijo') return '🚗 Punto Fijo';
+                    if (type === 'fiscalizador') return '👮 Fiscalizador';
+                    if (type === 'bicicleta') return '🚴 Bicicleta';
+                    return `N/A (${inspectorType})`;
+                  })()}
                 </span>
               </div>
               <div className="info-item">

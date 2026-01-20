@@ -9,13 +9,24 @@ import { API_CONFIG } from '../config/api';
 export interface InspectorData {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  type: string; // 'punto_fijo' o 'motorizado' (valores del backend)
-  zone_id: string;
-  zone_name: string;
-  created_at: string;
-  updated_at: string;
+  dni?: string;
+  email?: string;
+  phone?: string;
+  type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta' (mapeado desde inspector_type)
+  zone_id?: string;
+  zone_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface InspectorAPIResponse {
+  inspector_id: string;
+  name: string;
+  dni?: string;
+  inspector_type: string; // Campo real del API
+  device_id?: string;
+  session_valid?: boolean;
+  authenticated_at?: string;
 }
 
 class InspectorService {
@@ -23,16 +34,31 @@ class InspectorService {
    * Obtener datos del inspector actual
    */
   async getMe(): Promise<InspectorData> {
-    const response = await httpClient.get<InspectorData>(
+    const response = await httpClient.get<InspectorAPIResponse>(
       API_CONFIG.ENDPOINTS.INSPECTOR_ME,
       API_CONFIG.MAIN_API
     );
     
     console.log('📋 Respuesta completa del /me:', JSON.stringify(response, null, 2));
-    console.log('📋 Campo type:', response.type);
-    console.log('📋 Tipo de type:', typeof response.type);
+    console.log('📋 Campo inspector_type:', response.inspector_type);
     
-    return response;
+    // Mapear respuesta del API a InspectorData
+    const inspectorData: InspectorData = {
+      id: response.inspector_id,
+      name: response.name,
+      dni: response.dni,
+      type: response.inspector_type, // Mapear inspector_type a type
+      email: undefined,
+      phone: undefined,
+      zone_id: undefined,
+      zone_name: undefined,
+      created_at: response.authenticated_at,
+      updated_at: response.authenticated_at,
+    };
+    
+    console.log('📋 InspectorData mapeado:', inspectorData);
+    
+    return inspectorData;
   }
 
   /**
