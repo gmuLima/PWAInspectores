@@ -39,6 +39,7 @@ function App() {
   const [batteryLevel, setBatteryLevel] = useState(100);
   const lowBatteryAlertedRef = useRef(false); // Para evitar múltiples alertas
   const [isLiveKitConnected, setIsLiveKitConnected] = useState(false);
+  const [livekitConnectionError, setLivekitConnectionError] = useState<string | null>(null);
   const [isTalking, setIsTalking] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
   const [currentSpeaker, setCurrentSpeaker] = useState<string | null>(null);
@@ -140,14 +141,18 @@ function App() {
       } else {
         console.warn('⚠️ No hay asignación activa');
         
-        // Buscar la próxima asignación programada más cercana
-        const scheduled = assignments.filter(a => a.assignment.status !== 'active');
+        // Buscar la próxima asignación programada más cercana en tiempo
+        const scheduled = assignments.filter(a => a.assignment.status === 'scheduled');
         if (scheduled.length > 0) {
-          // Ordenar por start_time y tomar la más cercana
-          const sorted = scheduled.sort((a, b) => 
-            new Date(a.assignment.start_time).getTime() - new Date(b.assignment.start_time).getTime()
-          );
-          const nextAssignment = sorted[0];
+          // Ordenar por hora de inicio (schedule.start_time)
+          const sortedByTime = scheduled.sort((a, b) => {
+            const timeA = a.schedule.start_time; // "06:00"
+            const timeB = b.schedule.start_time; // "14:00"
+            return timeA.localeCompare(timeB);
+          });
+          
+          const nextAssignment = sortedByTime[0];
+          console.log('📅 Próxima programada más cercana:', nextAssignment.zone.name, 'a las', nextAssignment.schedule.start_time);
           
           // Obtener detalles con geometry
           const nextDetails = await assignmentService.getDetails(nextAssignment.assignment.id);
@@ -184,6 +189,7 @@ function App() {
       if (inspectorId && !isLiveKitConnected) {
         try {
           console.log('🎙️ Intentando conectar a LiveKit con inspector:', inspectorId);
+          setLivekitConnectionError(null); // Limpiar error previo
           
           // Configurar callback para cambios de participantes
           livekitService.setOnParticipantCountChange((count) => {
@@ -200,13 +206,17 @@ function App() {
           setIsLiveKitConnected(connected);
           if (connected) {
             console.log('✅ LiveKit conectado exitosamente');
+            setLivekitConnectionError(null);
             // Obtener conteo inicial
             setParticipantCount(livekitService.getParticipantCount());
           } else {
             console.error('❌ LiveKit no pudo conectar');
+            setLivekitConnectionError('No se pudo conectar al servidor de radio');
           }
         } catch (error) {
           console.error('❌ Error fatal conectando a LiveKit:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+          setLivekitConnectionError(errorMessage);
         }
       }
     };
@@ -237,7 +247,7 @@ function App() {
     }
   }, [isLoggedIn]);
 
-  // Polling periódico para actualizar asignaciones (cada 2 minutos)
+  // Polling periódico para actualizar asignaciones (cada 30 segundos)
   useEffect(() => {
     if (!isLoggedIn) return;
 
@@ -272,10 +282,17 @@ function App() {
         const activeAssignment = await assignmentService.getActiveAssignmentDetails();
         
         if (activeAssignment) {
-          // Si la asignación activa cambió
+          // Si la asignación activa cambió o se activó una que estaba programada
           if (previousActiveId !== activeAssignment.assignment.id) {
-            console.log('🎉 Nueva asignación activa detectada:', activeAssignment.zone.name);
-            alert(`🎉 Tu asignación en ${activeAssignment.zone.name} está ahora ACTIVA`);
+            if (previousScheduledId === activeAssignment.assignment.id) {
+              // Una programada se activó
+              console.log('🎉 Asignación programada ahora ACTIVA:', activeAssignment.zone.name);
+              alert(`🎉 Tu asignación programada en ${activeAssignment.zone.name} está ahora ACTIVA`);
+            } else {
+              // Nueva asignación activa diferente
+              console.log('🎉 Nueva asignación activa detectada:', activeAssignment.zone.name);
+              alert(`🎉 Tu asignación en ${activeAssignment.zone.name} está ahora ACTIVA`);
+            }
           }
           
           setCurrentAssignment(activeAssignment);
@@ -297,16 +314,51 @@ function App() {
           setCurrentAssignment(null);
           setZonePolygon(null);
           
-          // Buscar próxima programada
-          const scheduled = assignments.filter(a => a.assignment.status !== 'active');
+          // Buscar próxima programada más cercana
+          const scheduled = assignments.filter(a => a.assignment.status === 'scheduled');
           if (scheduled.length > 0) {
-            const sorted = scheduled.sort((a, b) => 
-              new Date(a.assignment.start_time).getTime() - new Date(b.assignment.start_time).getTime()
-            );
-            const nextAssignment = sorted[0];
+            // Ordenar por hora de inicio (schedule.start_time)
+            const sortedByTime = scheduled.sort((a, b) => {
+              const timeA = a.schedule.start_time; // "06:00"
+              const timeB = b.schedule.start_time; // "14:00"
+              return timeA.localeCompare(timeB);
+            });
+            
+            const nextAssignment = sortedByTime[0];
+            console.log('📅 Próxima programada:', nextAssignment.zone.name, 'a las', nextAssignment.schedule.start_time);
             
             // Verificar si cambió la próxima programada
             if (nextAssignment.assignment.id !== previousScheduledId) {
+              try {
+                const nextDetails = await assignmentService.getDetails(nextAssignment.assignment.id);
+                setNextScheduledAssignment(nextDetails);
+                
+                if (nextDetails.zone?.geometry) {
+                  const polygon = parseWKTPolygon(nextDetails.zone.geometry);
+                  setZonePolygon(polygon);
+                }
+              } catch (error) {
+                console.error('❌ Error obteniendo detalles de programada:', error);
+              }
+            }
+          } else {
+            setNextScheduledAssignment(null);
+          }
+        } else {
+          // No hay activa, buscar próxima programada más cercana
+          const scheduled = assignments.filter(a => a.assignment.status === 'scheduled');
+          if (scheduled.length > 0) {
+            const sortedByTime = scheduled.sort((a, b) => {
+              const timeA = a.schedule.start_time;
+              const timeB = b.schedule.start_time;
+              return timeA.localeCompare(timeB);
+            });
+            
+            const nextAssignment = sortedByTime[0];
+            
+            // Si cambió la próxima programada
+            if (!previousScheduledId || nextAssignment.assignment.id !== previousScheduledId) {
+              console.log('🔄 Nueva próxima programada:', nextAssignment.zone.name, 'a las', nextAssignment.schedule.start_time);
               try {
                 const nextDetails = await assignmentService.getDetails(nextAssignment.assignment.id);
                 setNextScheduledAssignment(nextDetails);
@@ -326,7 +378,7 @@ function App() {
       } catch (error) {
         console.error('Error actualizando asignaciones:', error);
       }
-    }, 120000); // 2 minutos
+    }, 30000); // 30 segundos
 
     return () => clearInterval(interval);
   }, [isLoggedIn, currentAssignment, nextScheduledAssignment, allAssignments]);
@@ -682,6 +734,8 @@ function App() {
         onStopRecording={handleStopRecording}
         onCenterMap={handleCenterMap}
         isConnected={isLiveKitConnected}
+        connectionError={livekitConnectionError}
+        onRetryConnection={() => setIsLiveKitConnected(false)} // Resetear para reintentar
         participantCount={participantCount}
         onOpenAssignments={() => setIsAssignmentsModalOpen(true)}
       />

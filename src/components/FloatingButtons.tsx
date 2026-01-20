@@ -9,6 +9,8 @@ interface FloatingButtonsProps {
   onStopRecording: () => void;
   onCenterMap: () => void;
   isConnected: boolean;
+  connectionError: string | null;
+  onRetryConnection: () => void;
   participantCount: number;
   onOpenAssignments: () => void;
 }
@@ -21,6 +23,8 @@ export function FloatingButtons({
   onStopRecording,
   onCenterMap,
   isConnected,
+  connectionError,
+  onRetryConnection,
   participantCount,
   onOpenAssignments,
 }: FloatingButtonsProps) {
@@ -60,17 +64,29 @@ export function FloatingButtons({
 
       {/* Botón de micrófono (Walkie-Talkie) */}
       <button
-        className={`fab fab-primary ${isRecording ? 'recording' : ''}`}
+        className={`fab fab-primary ${isRecording ? 'recording' : ''} ${connectionError ? 'error' : ''}`}
         onMouseDown={isConnected ? onStartRecording : undefined}
         onMouseUp={isConnected ? onStopRecording : undefined}
         onMouseLeave={isConnected && isRecording ? onStopRecording : undefined}
         onTouchStart={isConnected ? onStartRecording : undefined}
         onTouchEnd={isConnected ? onStopRecording : undefined}
         onTouchCancel={isConnected && isRecording ? onStopRecording : undefined}
-        disabled={!isConnected}
-        title={isConnected ? 'Mantén presionado para hablar' : 'Conectando a radio...'}
+        onClick={connectionError ? onRetryConnection : undefined}
+        disabled={!isConnected && !connectionError}
+        title={
+          connectionError 
+            ? `Error: ${connectionError}. Toca para reintentar` 
+            : isConnected 
+              ? 'Mantén presionado para hablar' 
+              : 'Conectando a radio...'
+        }
       >
-        {isRecording ? (
+        {connectionError ? (
+          <>
+            <span className="fab-icon error-icon">⚠️</span>
+            <span className="error-text">Reintentar</span>
+          </>
+        ) : isRecording ? (
           <>
             <span className="fab-icon recording-icon">🎤</span>
             <span className="recording-time">{formatTime(recordingTime)}</span>

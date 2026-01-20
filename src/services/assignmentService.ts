@@ -9,16 +9,22 @@ import { API_CONFIG } from '../config/api';
 export interface Zone {
   id: string;
   name: string;
-  type: string;
+  type: string; // 'poligono' es el tipo general
   geometry?: string; // WKT POLYGON (solo en details)
+}
+
+export interface Schedule {
+  id: string;
+  name: string;
+  shift_type: 'morning' | 'afternoon' | 'night';
+  total_hours: number;
+  start_time: string; // HH:mm format (e.g. "06:00")
+  end_time: string;   // HH:mm format (e.g. "14:00")
 }
 
 export interface Assignment {
   id: string;
-  start_time: string;
-  end_time: string | null;
   status: 'active' | 'scheduled' | 'completed' | 'cancelled';
-  is_active: boolean;
 }
 
 export interface AssignmentItem {
@@ -28,6 +34,7 @@ export interface AssignmentItem {
     name: string;
   };
   zone: Zone;
+  schedule: Schedule;
 }
 
 export interface AssignmentDetails {
@@ -39,6 +46,7 @@ export interface AssignmentDetails {
   zone: Zone & {
     geometry: string; // geometry solo viene en details
   };
+  schedule: Schedule;
 }
 
 class AssignmentService {

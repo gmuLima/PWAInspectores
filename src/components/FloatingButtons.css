@@ -103,6 +103,47 @@
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
+.fab-primary.error {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  animation: pulse-error 2s infinite;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6), 0 6px 20px rgba(245, 158, 11, 0.3);
+  cursor: pointer !important;
+}
+
+.fab-primary.error:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: scale(1.1);
+}
+
+.error-icon {
+  font-size: 32px;
+  line-height: 1;
+  animation: shake 0.5s ease;
+}
+
+.error-text {
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+@keyframes pulse-error {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), 0 6px 20px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.8), 0 6px 20px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
 .fab-icon {
   line-height: 1;
 }

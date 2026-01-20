@@ -3,10 +3,7 @@ import './AssignmentsModal.css';
 interface AssignmentItem {
   assignment: {
     id: string;
-    start_time: string;
-    end_time: string | null;
     status: string;
-    is_active: boolean;
   };
   inspector: {
     id: string;
@@ -16,6 +13,14 @@ interface AssignmentItem {
     id: string;
     name: string;
     type: string;
+  };
+  schedule: {
+    id: string;
+    name: string;
+    shift_type: 'morning' | 'afternoon' | 'night';
+    total_hours: number;
+    start_time: string; // HH:mm format
+    end_time: string;   // HH:mm format
   };
 }
 
@@ -31,21 +36,17 @@ export function AssignmentsModal({ isOpen, onClose, assignments }: AssignmentsMo
   const activeAssignments = assignments.filter((a) => a.assignment.status === 'active');
   const scheduledAssignments = assignments.filter((a) => a.assignment.status !== 'active');
 
-  const formatTime = (timeString: string) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const formatDate = (timeString: string) => {
-    const date = new Date(timeString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-    });
+  const getShiftIcon = (shiftType: 'morning' | 'afternoon' | 'night') => {
+    switch (shiftType) {
+      case 'morning':
+        return '🌅';
+      case 'afternoon':
+        return '☀️';
+      case 'night':
+        return '🌙';
+      default:
+        return '🕐';
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -88,23 +89,19 @@ export function AssignmentsModal({ isOpen, onClose, assignments }: AssignmentsMo
                       </div>
                       <div className="assignment-details">
                         <div className="detail-row">
+                          <span className="detail-label">{getShiftIcon(item.schedule.shift_type)} Turno:</span>
+                          <span className="detail-value">{item.schedule.name}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">🕐 Horario:</span>
+                          <span className="detail-value">
+                            {item.schedule.start_time} - {item.schedule.end_time} ({item.schedule.total_hours}h)
+                          </span>
+                        </div>
+                        <div className="detail-row">
                           <span className="detail-label">Tipo de Zona:</span>
                           <span className="detail-value">{item.zone.type}</span>
                         </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Inicio:</span>
-                          <span className="detail-value">
-                            {formatDate(item.assignment.start_time)} - {formatTime(item.assignment.start_time)}
-                          </span>
-                        </div>
-                        {item.assignment.end_time && (
-                          <div className="detail-row">
-                            <span className="detail-label">Fin programado:</span>
-                            <span className="detail-value">
-                              {formatTime(item.assignment.end_time)}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -123,23 +120,19 @@ export function AssignmentsModal({ isOpen, onClose, assignments }: AssignmentsMo
                       </div>
                       <div className="assignment-details">
                         <div className="detail-row">
+                          <span className="detail-label">{getShiftIcon(item.schedule.shift_type)} Turno:</span>
+                          <span className="detail-value">{item.schedule.name}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">🕐 Horario programado:</span>
+                          <span className="detail-value">
+                            {item.schedule.start_time} - {item.schedule.end_time} ({item.schedule.total_hours}h)
+                          </span>
+                        </div>
+                        <div className="detail-row">
                           <span className="detail-label">Tipo de Zona:</span>
                           <span className="detail-value">{item.zone.type}</span>
                         </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Inicio programado:</span>
-                          <span className="detail-value">
-                            {formatDate(item.assignment.start_time)} - {formatTime(item.assignment.start_time)}
-                          </span>
-                        </div>
-                        {item.assignment.end_time && (
-                          <div className="detail-row">
-                            <span className="detail-label">Fin programado:</span>
-                            <span className="detail-value">
-                              {formatTime(item.assignment.end_time)}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
