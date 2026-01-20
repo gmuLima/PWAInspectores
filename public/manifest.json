@@ -1,0 +1,77 @@
+{
+  "name": "Inspectores de Tránsito Municipal",
+  "short_name": "Inspector",
+  "description": "PWA para inspectores de tránsito con geolocalización en tiempo real, comunicación por Socket.IO y audio push-to-talk",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#1f2937",
+  "categories": ["utilities", "transportation"],
+  "screenshots": [
+    {
+      "src": "/ic_launcher-playstore.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/ic_launcher-playstore.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/ic_launcher-playstore.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ic_launcher-playstore.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ic_launcher-playstore.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/ic_launcher-playstore.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Iniciar seguimiento",
+      "short_name": "Seguimiento",
+      "description": "Inicia el seguimiento de ubicación",
+      "url": "/?action=track",
+      "icons": [
+        {
+          "src": "/ic_launcher-playstore.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

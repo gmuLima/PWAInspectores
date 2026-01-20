@@ -1,0 +1,280 @@
+.control-panel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inspector-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item .label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.info-item .value {
+  font-size: 13px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status.online {
+  color: #10b981;
+}
+
+.status.offline {
+  color: #ef4444;
+}
+
+.error-banner {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 0;
+}
+
+.error-banner p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #991b1b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.error-banner p:first-child {
+  margin-top: 0;
+}
+
+.error-banner p:last-child {
+  margin-bottom: 0;
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.control-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.control-btn:hover:not(:disabled) {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.control-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+.control-btn .icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.control-btn .text {
+  font-size: 12px;
+}
+
+/* Botón de tracking */
+.tracking-btn {
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.tracking-btn:hover:not(:disabled) {
+  border-color: #1e40af;
+  background: #eff6ff;
+}
+
+.tracking-btn.active {
+  border-color: #1e40af;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+/* Botón de voz */
+.voice-btn {
+  border-color: #ef4444;
+  color: #7f1d1d;
+  position: relative;
+}
+
+.voice-btn:hover:not(:disabled) {
+  border-color: #7f1d1d;
+  background: #fef2f2;
+}
+
+.voice-btn.recording {
+  border-color: #dc2626;
+  background: #fee2e2;
+  color: #7f1d1d;
+  animation: pulse-btn 0.5s infinite;
+}
+
+.voice-btn .recording-icon {
+  animation: pulse-icon 1s infinite;
+}
+
+.voice-btn .recording-time {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@keyframes pulse-btn {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes pulse-icon {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  background: #fee2e2;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7f1d1d;
+  animation: bounce 1s infinite;
+}
+
+.recording-indicator .dot {
+  width: 6px;
+  height: 6px;
+  background: #dc2626;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+.recording-indicator .dot:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.usage-info {
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  color: #1e40af;
+  line-height: 1.4;
+}
+
+.usage-info p {
+  margin: 4px 0;
+}
+
+.usage-info p:first-child {
+  margin-top: 0;
+}
+
+.usage-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* Mobile optimización */
+@media (max-width: 480px) {
+  .control-btn {
+    padding: 14px 10px;
+  }
+
+  .button-group {
+    gap: 10px;
+  }
+
+  .control-btn .icon {
+    font-size: 20px;
+  }
+
+  .control-btn .text {
+    font-size: 11px;
+  }
+}

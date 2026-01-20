@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
+    <meta name="description" content="PWA para inspectores de tránsito municipal con geolocalización en tiempo real" />
+    <meta name="theme-color" content="#1f2937" />
+    
+    <!-- Standard / cross-browser -->
+    <meta name="mobile-web-app-capable" content="yes">
+    
+
+    <!-- iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Inspector" />
+    <meta name="apple-mobile-web-app-icon-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="format-detection" content="email=no" />
+    
+    <!-- Icono para iOS -->
+    <link rel="apple-touch-icon" href="/ic_launcher-playstore.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/ic_launcher-playstore.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/ic_launcher-playstore.png" />
+    
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/ic_launcher-playstore.png" />
+    
+    <title>Inspectores de Tránsito</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Script para registrar service worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(
+            registration => {
+              console.log('✅ Service Worker registrado:', registration);
+            },
+            err => {
+              console.error('❌ Error registrando Service Worker:', err);
+            }
+          );
+        });
+      }
+      
+      // Force render en iOS
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        document.documentElement.style.height = '100vh';
+        document.body.style.height = '100vh';
+      }
+    </script>
+  </body>
+</html>

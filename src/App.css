@@ -1,0 +1,172 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f3f4f6;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f3f4f6;
+}
+
+/* LAYOUT MOBILE-FIRST */
+.app.mobile-layout {
+  position: relative;
+}
+
+.map-fullscreen {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding-top: var(--header-height, 80px);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Pantalla de configuración */
+.setup-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.setup-container {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 32px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.setup-container h1 {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  color: #1f2937;
+}
+
+.setup-container p {
+  margin: 0 0 32px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.form-group input {
+  padding: 12px 14px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.setup-btn {
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 12px;
+}
+
+.setup-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.setup-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.setup-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Desktop layout (si es necesario) */
+@media (min-width: 1024px) {
+  .app.mobile-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+  }
+
+  .map-fullscreen {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    padding-top: var(--header-height, 80px);
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Tablet y iPad */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .map-fullscreen {
+    padding-top: 90px;
+  }
+}
