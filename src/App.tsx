@@ -224,6 +224,39 @@ function App() {
     connectToLiveKit();
   }, [inspectorData, isLiveKitConnected]);
 
+  // Mantener audio activo cuando la app está en background y verificar reconexión
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        console.log('📱 App minimizada - manteniendo audio activo');
+        // El audio debe seguir funcionando automáticamente
+      } else {
+        console.log('📱 App visible nuevamente - verificando conexión LiveKit...');
+        
+        // Verificar si LiveKit sigue conectado
+        if (isLoggedIn && inspectorData) {
+          const isStillConnected = livekitService.getIsConnected();
+          
+          if (!isStillConnected) {
+            console.warn('⚠️ LiveKit desconectado - actualizando estado');
+            setIsLiveKitConnected(false);
+            setLivekitConnectionError('Conexión perdida. Toca el micrófono para reconectar');
+          } else {
+            console.log('✅ LiveKit sigue conectado');
+            // Actualizar contador de participantes por si cambió
+            setParticipantCount(livekitService.getParticipantCount());
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLoggedIn, inspectorData]);
+
   // Sincronizar estado de isTalking con LiveKit cada segundo como respaldo
   useEffect(() => {
     const syncInterval = setInterval(() => {
@@ -239,6 +272,29 @@ function App() {
 
     return () => clearInterval(syncInterval);
   }, [isLiveKitConnected, isTalking]);
+
+  // Verificar conexión de LiveKit periódicamente (cada 10 segundos)
+  useEffect(() => {
+    if (!isLoggedIn || !inspectorData) return;
+
+    const connectionCheckInterval = setInterval(() => {
+      const isStillConnected = livekitService.getIsConnected();
+      
+      if (isLiveKitConnected && !isStillConnected) {
+        console.warn('⚠️ LiveKit desconectado detectado en chequeo periódico');
+        setIsLiveKitConnected(false);
+        setLivekitConnectionError('Conexión perdida. Toca el micrófono para reconectar');
+      } else if (!isLiveKitConnected && isStillConnected) {
+        // Se reconectó de alguna forma, actualizar estado
+        console.log('✅ LiveKit reconectado detectado');
+        setIsLiveKitConnected(true);
+        setLivekitConnectionError(null);
+        setParticipantCount(livekitService.getParticipantCount());
+      }
+    }, 10000); // Cada 10 segundos
+
+    return () => clearInterval(connectionCheckInterval);
+  }, [isLoggedIn, inspectorData, isLiveKitConnected]);
 
   // Iniciar rastreo automáticamente cuando se hace login
   useEffect(() => {
@@ -444,6 +500,7 @@ function App() {
         location.lng,
         outOfZone,
         currentAssignment
+        // isLogout = false (valor por defecto)
       );
     };
     
@@ -564,26 +621,85 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      // Detener rastreos
+      console.log('🚪 Iniciando proceso de logout...');
+      
+      // 1. PRIMERO: Enviar ubicación final con is_logout=true
+      if (location) {
+        console.log('📍 Enviando ubicación final con is_logout=true...');
+        try {
+          await gpsService.sendPosition(
+            location.lat,
+            location.lng,
+            isOutOfZone,
+            currentAssignment,
+            true // is_logout = true
+          );
+          console.log('✅ Ubicación final enviada correctamente');
+        } catch (error) {
+          console.error('❌ Error enviando ubicación final:', error);
+          // Continuar con logout aunque falle el envío
+        }
+      } else {
+        console.warn('⚠️ No hay ubicación disponible para enviar en logout');
+      }
+
+      // 2. LUEGO: Detener rastreos
       stopTracking();
       if (isGpsTracking) {
         stopGpsTracking();
       }
 
-      // Logout en servicio de autenticación
+      // 3. Logout en servicio de autenticación
       authService.logout();
 
-      // Desconectar LiveKit
+      // 4. Desconectar LiveKit
       livekitService.disconnect();
 
-      // Limpiar estado local
+      // 5. Limpiar estado local
       setIsLoggedIn(false);
       setInspectorName('');
       setCurrentAssignment(null);
       setZonePolygon(null);
       setLoginToken('');
+      
+      console.log('✅ Logout completado exitosamente');
     } catch (error) {
-      console.error('Error durante logout:', error);
+      console.error('❌ Error durante logout:', error);
+    }
+  };
+
+  // Manejar reconexión a LiveKit
+  const handleRetryConnection = async () => {
+    if (!inspectorData) {
+      console.error('❌ No hay datos del inspector para reconectar');
+      return;
+    }
+
+    console.log('🔄 Intentando reconectar a LiveKit...');
+    setLivekitConnectionError(null);
+    setIsLiveKitConnected(false);
+
+    try {
+      // Desconectar primero si hay alguna conexión residual
+      await livekitService.disconnect();
+
+      // Intentar reconectar
+      const inspectorId = (inspectorData as any).inspector_id || (inspectorData as any).id;
+      const connected = await livekitService.connect(inspectorId);
+      
+      setIsLiveKitConnected(connected);
+      
+      if (connected) {
+        console.log('✅ Reconexión exitosa');
+        setParticipantCount(livekitService.getParticipantCount());
+      } else {
+        console.error('❌ Reconexión fallida');
+        setLivekitConnectionError('No se pudo reconectar. Intenta nuevamente');
+      }
+    } catch (error) {
+      console.error('❌ Error en reconexión:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+      setLivekitConnectionError(errorMessage);
     }
   };
 
@@ -735,7 +851,7 @@ function App() {
         onCenterMap={handleCenterMap}
         isConnected={isLiveKitConnected}
         connectionError={livekitConnectionError}
-        onRetryConnection={() => setIsLiveKitConnected(false)} // Resetear para reintentar
+        onRetryConnection={handleRetryConnection}
         participantCount={participantCount}
         onOpenAssignments={() => setIsAssignmentsModalOpen(true)}
       />

@@ -17,6 +17,9 @@ export interface GPSPosition {
   batery: string; // porcentaje 0-100
   velocidad: string; // en km/h
   is_out_zone: boolean;
+  is_logout: boolean; // true cuando se envía antes de logout, false en envíos normales
+  schedule_id: string; // ID del turno/horario
+  schedule_name: string; // Nombre del turno/horario
   latitude: number;
   longitude: number;
   timestamp: string; // ISO-8601
@@ -57,7 +60,8 @@ class GPSService {
     latitude: number,
     longitude: number,
     isOutZone: boolean,
-    assignmentDetails: any // AssignmentDetails (opcional)
+    assignmentDetails: any, // AssignmentDetails (opcional)
+    isLogout: boolean = false // true cuando se envía antes de logout
   ): Promise<void> {
     try {
       const inspector = inspectorService.getFromCache();
@@ -84,6 +88,9 @@ class GPSService {
         batery: await this.getBatteryLevel(),
         velocidad: this.calculateSpeed(),
         is_out_zone: isOutZone,
+        is_logout: isLogout,
+        schedule_id: assignmentDetails?.schedule?.id || null,
+        schedule_name: assignmentDetails?.schedule?.name || null,
         latitude,
         longitude,
         timestamp: new Date().toISOString(),

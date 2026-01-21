@@ -15,6 +15,16 @@ import httpClient from './httpClient';
 import { API_CONFIG } from '../config/api';
 import beepSound from '../utils/beepSound';
 
+// CONFIGURACIÓN DE VOLUMEN
+// Ajusta este valor para cambiar el volumen de las voces recibidas
+// Valores recomendados:
+// - 1.0 = 100% (volumen normal)
+// - 1.5 = 150% (50% más fuerte)
+// - 2.0 = 200% (doble de volumen)
+// - 3.0 = 300% (triple de volumen)
+// NOTA: Valores muy altos (>3.0) pueden causar distorsión
+const AUDIO_GAIN_MULTIPLIER = 2.0;
+
 export interface LiveKitTokenResponse {
   token: string;
   server_url: string;
@@ -159,7 +169,35 @@ class LiveKitService {
       // Auto-reproducir audio de otros participantes
       if (track.kind === Track.Kind.Audio) {
         const audioElement = track.attach();
-        audioElement.play().catch(console.error);
+        // Configurar audio para background playback
+        audioElement.setAttribute('playsinline', 'true');
+        audioElement.setAttribute('webkit-playsinline', 'true');
+        
+        // Aumentar volumen al máximo (1.0 = 100%)
+        audioElement.volume = 1.0;
+        
+        // Amplificar audio más allá del 100% usando Web Audio API
+        try {
+          const audioContext = new AudioContext();
+          const source = audioContext.createMediaElementSource(audioElement);
+          const gainNode = audioContext.createGain();
+          
+          // Aplicar multiplicador de ganancia configurado
+          gainNode.gain.value = AUDIO_GAIN_MULTIPLIER;
+          
+          source.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          console.log(`🔊 Audio amplificado a ${AUDIO_GAIN_MULTIPLIER * 100}% del volumen`);
+        } catch (audioApiError) {
+          console.warn('⚠️ Web Audio API no disponible, usando volumen estándar:', audioApiError);
+        }
+        
+        audioElement.play().catch(err => {
+          console.error('❌ Error reproduciendo audio:', err);
+          // Reintentar reproducción después de interacción del usuario
+          setTimeout(() => audioElement.play().catch(console.error), 1000);
+        });
       }
     });
 
