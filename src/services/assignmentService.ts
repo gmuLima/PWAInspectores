@@ -25,6 +25,7 @@ export interface Schedule {
 export interface Assignment {
   id: string;
   status: 'active' | 'scheduled' | 'completed' | 'cancelled';
+  start_date: string; // Fecha de la asignación (YYYY-MM-DD)
 }
 
 export interface AssignmentItem {
@@ -175,21 +176,23 @@ class AssignmentService {
   async updateStatus(assignmentId: string, status: 'active' | 'finished'): Promise<boolean> {
     try {
       console.log(`📋 Cambiando estado de asignación ${assignmentId} a ${status}...`);
-      const response = await httpClient.patch<{ success: boolean; message?: string }>(
+      
+      // httpClient.patch retorna solo data.data, no el objeto completo
+      await httpClient.patch(
         `/apk/assignment/${assignmentId}/status`,
         { status },
         API_CONFIG.MAIN_API
       );
       
-      if (response.success) {
-        console.log(`✅ Estado cambiado a ${status} exitosamente`);
-        return true;
-      } else {
-        console.error('❌ Error cambiando estado:', response.message);
-        return false;
-      }
-    } catch (error) {
+      console.log(`✅ Estado cambiado a ${status} exitosamente`);
+      return true;
+    } catch (error: any) {
       console.error('❌ Error en updateStatus:', error);
+      console.error('❌ Detalles del error:', {
+        message: error.message,
+        code: error.code,
+        status: error.status
+      });
       return false;
     }
   }
@@ -228,20 +231,44 @@ class AssignmentService {
 
   /**
    * Procesar inicio/fin automático de asignaciones
-   * Retorna true si hubo algún cambio
+   * Retorna objeto con información de cambios y asignación activada
    */
-  async processAutoStatusChanges(assignments: AssignmentItem[]): Promise<boolean> {
+  async processAutoStatusChanges(
+    assignments: AssignmentItem[],
+    onAssignmentActivated?: (assignment: AssignmentItem) => Promise<void>
+  ): Promise<{ hasChanges: boolean; activatedAssignment?: AssignmentItem }> {
     let hasChanges = false;
+    let activatedAssignment: AssignmentItem | undefined;
+
+    console.log('🔍 processAutoStatusChanges - Callback recibido:', !!onAssignmentActivated);
 
     for (const assignment of assignments) {
       // Verificar si debe iniciarse
       if (this.shouldStartAssignment(assignment)) {
         console.log(`⏰ Iniciando asignación automáticamente: ${assignment.zone.name}`);
+        
+        // Intentar cambiar el estado (pero no depender de su resultado)
         const success = await this.updateStatus(assignment.assignment.id, 'active');
-        if (success) {
-          hasChanges = true;
-          // Mostrar alerta aquí para evitar duplicados
-          alert(`🎉 Tu asignación en ${assignment.zone.name} ha iniciado automáticamente`);
+        console.log(`🔍 updateStatus retornó: ${success}`);
+        
+        // SIEMPRE ejecutar el callback, independientemente del resultado de updateStatus
+        hasChanges = true;
+        activatedAssignment = assignment;
+        
+        // Mostrar alerta
+        alert(`🎉 Tu asignación en ${assignment.zone.name} ha iniciado automáticamente`);
+        
+        // Ejecutar callback si se proporciona (para registrar asistencia)
+        if (onAssignmentActivated) {
+          console.log('🔍 Ejecutando callback onAssignmentActivated...');
+          try {
+            await onAssignmentActivated(assignment);
+            console.log('✅ Callback ejecutado exitosamente');
+          } catch (callbackError) {
+            console.error('❌ Error en callback:', callbackError);
+          }
+        } else {
+          console.warn('⚠️ No hay callback para ejecutar');
         }
       }
 
@@ -257,7 +284,8 @@ class AssignmentService {
       }
     }
 
-    return hasChanges;
+    console.log('🔍 processAutoStatusChanges resultado:', { hasChanges, activatedAssignment: !!activatedAssignment });
+    return { hasChanges, activatedAssignment };
   }
 }
 

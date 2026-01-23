@@ -9,6 +9,7 @@ import { API_CONFIG } from '../config/api';
 export interface InspectorData {
   id: string;
   name: string;
+  last_name: string;
   dni?: string;
   email?: string;
   phone?: string;
@@ -22,6 +23,7 @@ export interface InspectorData {
 interface InspectorAPIResponse {
   inspector_id: string;
   name: string;
+  last_name: string;
   dni?: string;
   inspector_type: string; // Campo real del API
   device_id?: string;
@@ -46,6 +48,7 @@ class InspectorService {
     const inspectorData: InspectorData = {
       id: response.inspector_id,
       name: response.name,
+      last_name: response.last_name,
       dni: response.dni,
       type: response.inspector_type, // Mapear inspector_type a type
       email: undefined,

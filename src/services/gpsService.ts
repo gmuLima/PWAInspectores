@@ -9,7 +9,8 @@ import inspectorService from './inspectorService';
 
 export interface GPSPosition {
   id: string; // inspector_id
-  name: string; // nombre del inspector
+  name: string; // solo nombres del inspector
+  last_name: string; // apellidos del inspector
   id_zone: string;
   name_zone: string;
   inspector_type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta'
@@ -81,6 +82,7 @@ class GPSService {
       const position: GPSPosition = {
         id: inspectorId,
         name: inspector.name || 'Sin nombre',
+        last_name: inspector.last_name || 'Sin apellido',
         id_zone: assignmentDetails?.zone?.id || 'sin-asignacion',
         name_zone: assignmentDetails?.zone?.name || 'Sin asignación',
         inspector_type: inspector.type || 'punto_fijo', // Enviar tal cual viene del backend

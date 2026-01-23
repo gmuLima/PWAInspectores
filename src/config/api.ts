@@ -25,6 +25,9 @@ export const API_CONFIG = {
     // Alertas
     ALERTS: '/apk/alerts',
     
+    // Asistencia
+    ATTENDANCE_CHECKIN: '/apk/attendance/checkin',
+    
     // GPS (servicio externo)
     GPS_POSITION: '/api/v1/gps/position',
   },

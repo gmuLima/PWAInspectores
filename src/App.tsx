@@ -16,6 +16,7 @@ import assignmentService from './services/assignmentService';
 import gpsService from './services/gpsService';
 import alertService from './services/alertService';
 import livekitService from './services/livekitService';
+import attendanceService from './services/attendanceService';
 import { isPointInsidePolygon, parseWKTPolygon } from './utils/wktParser';
 import beepSound from './utils/beepSound';
 import './App.css';
@@ -91,13 +92,69 @@ function App() {
     };
   }, []);
 
+  // Función helper para registrar asistencia cuando se activa una asignación
+  const registerAttendanceForActivatedAssignment = async (assignment: any) => {
+    try {
+      console.log('📋 ===== INICIANDO REGISTRO DE ASISTENCIA =====');
+      console.log('📋 Asignación:', assignment);
+      console.log('📋 Assignment ID:', assignment.assignment.id);
+      console.log('📋 Zona:', assignment.zone.name);
+      
+      // Obtener ubicación actual para el check-in
+      console.log('📍 Solicitando ubicación GPS...');
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      console.log('📍 Ubicación obtenida:', { latitude, longitude });
+
+      // Obtener inspector_id
+      const inspector = inspectorService.getFromCache();
+      console.log('👤 Inspector desde cache:', inspector);
+      const inspectorId = (inspector as any)?.inspector_id || (inspector as any)?.id;
+      console.log('👤 Inspector ID:', inspectorId);
+
+      if (!inspectorId) {
+        console.warn('⚠️ No se pudo obtener inspector_id para asistencia');
+        return;
+      }
+
+      // Usar el assignment_id de la asignación que se acaba de activar
+      const assignmentId = assignment.assignment.id;
+      const scheduleId = assignment.schedule?.id || null;
+      console.log('📋 Llamando a attendanceService.checkIn con:', {
+        inspectorId,
+        latitude,
+        longitude,
+        assignmentId,
+        scheduleId
+      });
+
+      // Registrar check-in
+      await attendanceService.checkIn(inspectorId, latitude, longitude, assignmentId, scheduleId);
+      console.log('✅ Asistencia registrada exitosamente para asignación:', assignment.zone.name);
+      console.log('📋 ===== FIN REGISTRO DE ASISTENCIA =====');
+    } catch (attendanceError) {
+      console.error('⚠️ Error registrando asistencia (no crítico):', attendanceError);
+      console.error('⚠️ Stack trace:', (attendanceError as Error).stack);
+      // No bloquear el flujo si falla la asistencia
+    }
+  };
+
   // Cargar datos del inspector y asignación
   const loadInspectorData = async () => {
     try {
       // Obtener datos del inspector
       const inspector = await inspectorService.getMeWithFallback();
       if (inspector) {
-        setInspectorName(inspector.name);
+        // Mostrar nombre completo (nombre + apellido)
+        const fullName = `${inspector.name} ${inspector.last_name}`.trim();
+        setInspectorName(fullName);
         setInspectorData(inspector); // Guardar datos completos
         console.log('✅ Inspector cargado completo:', inspector);
       } else {
@@ -109,10 +166,13 @@ function App() {
       
       // NUEVO: Procesar cambios automáticos al cargar (por si inician sesión tarde)
       console.log('⏰ Verificando cambios automáticos de estado al iniciar...');
-      const hasAutoChanges = await assignmentService.processAutoStatusChanges(assignments);
+      const result = await assignmentService.processAutoStatusChanges(
+        assignments,
+        registerAttendanceForActivatedAssignment
+      );
       
       // Si hubo cambios, recargar asignaciones
-      if (hasAutoChanges) {
+      if (result.hasChanges) {
         console.log('🔄 Recargando asignaciones después de cambios automáticos...');
         assignments = await assignmentService.getCurrent();
       }
@@ -331,10 +391,13 @@ function App() {
         const assignments = await assignmentService.getCurrent();
         
         // NUEVO: Procesar cambios automáticos de estado (inicio/fin)
-        const hasAutoChanges = await assignmentService.processAutoStatusChanges(assignments);
+        const result = await assignmentService.processAutoStatusChanges(
+          assignments,
+          registerAttendanceForActivatedAssignment
+        );
         
         // Si hubo cambios automáticos, recargar asignaciones
-        const finalAssignments = hasAutoChanges 
+        const finalAssignments = result.hasChanges 
           ? await assignmentService.getCurrent() 
           : assignments;
         
@@ -362,7 +425,7 @@ function App() {
           if (previousActiveId !== activeAssignment.assignment.id) {
             // Solo mostrar alerta si NO hubo cambios automáticos
             // (si hubo cambios automáticos, ya se mostró la alerta en processAutoStatusChanges)
-            if (!hasAutoChanges) {
+            if (!result.hasChanges) {
               if (previousScheduledId === activeAssignment.assignment.id) {
                 // Una programada se activó
                 console.log('🎉 Asignación programada ahora ACTIVA:', activeAssignment.zone.name);
@@ -392,7 +455,7 @@ function App() {
         } else if (previousActiveId) {
           // La asignación activa terminó o fue cancelada
           // Solo mostrar alerta si NO hubo cambios automáticos (ya se mostró)
-          if (!hasAutoChanges) {
+          if (!result.hasChanges) {
             console.log('⏹️ Asignación activa finalizada o cancelada');
             alert('⏹️ Tu asignación activa ha finalizado');
           } else {
@@ -683,10 +746,13 @@ function App() {
       // 3. Logout en servicio de autenticación
       authService.logout();
 
-      // 4. Desconectar LiveKit
+      // 4. Limpiar datos de asistencia
+      attendanceService.clearAttendanceData();
+
+      // 5. Desconectar LiveKit
       livekitService.disconnect();
 
-      // 5. Limpiar estado local
+      // 6. Limpiar estado local
       setIsLoggedIn(false);
       setInspectorName('');
       setCurrentAssignment(null);

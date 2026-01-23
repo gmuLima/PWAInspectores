@@ -4,6 +4,7 @@ interface AssignmentItem {
   assignment: {
     id: string;
     status: string;
+    start_date: string; // Fecha de la asignación (YYYY-MM-DD)
   };
   inspector: {
     id: string;
@@ -89,6 +90,10 @@ export function AssignmentsModal({ isOpen, onClose, assignments }: AssignmentsMo
                       </div>
                       <div className="assignment-details">
                         <div className="detail-row">
+                          <span className="detail-label">📅 Fecha:</span>
+                          <span className="detail-value">{new Date(item.assignment.start_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <div className="detail-row">
                           <span className="detail-label">{getShiftIcon(item.schedule.shift_type)} Turno:</span>
                           <span className="detail-value">{item.schedule.name}</span>
                         </div>
@@ -119,6 +124,10 @@ export function AssignmentsModal({ isOpen, onClose, assignments }: AssignmentsMo
                         {getStatusBadge(item.assignment.status)}
                       </div>
                       <div className="assignment-details">
+                        <div className="detail-row">
+                          <span className="detail-label">📅 Fecha:</span>
+                          <span className="detail-value">{new Date(item.assignment.start_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
                         <div className="detail-row">
                           <span className="detail-label">{getShiftIcon(item.schedule.shift_type)} Turno:</span>
                           <span className="detail-value">{item.schedule.name}</span>
