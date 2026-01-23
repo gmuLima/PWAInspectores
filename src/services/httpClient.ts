@@ -123,6 +123,32 @@ class HttpClient {
   }
 
   /**
+   * PATCH request
+   */
+  async patch<T = any>(
+    endpoint: string,
+    body: any,
+    baseUrl: string = API_CONFIG.MAIN_API,
+    options?: RequestInit
+  ): Promise<T> {
+    const url = `${baseUrl}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...this.getAuthHeaders(),
+      ...options?.headers,
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    return this.handleResponse<T>(response);
+  }
+
+  /**
    * DELETE request
    */
   async delete<T = any>(

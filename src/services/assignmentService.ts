@@ -168,6 +168,97 @@ class AssignmentService {
     localStorage.removeItem('active_assignment');
     localStorage.removeItem('assignment_cache_time');
   }
+
+  /**
+   * Cambiar estado de una asignación
+   */
+  async updateStatus(assignmentId: string, status: 'active' | 'finished'): Promise<boolean> {
+    try {
+      console.log(`📋 Cambiando estado de asignación ${assignmentId} a ${status}...`);
+      const response = await httpClient.patch<{ success: boolean; message?: string }>(
+        `/apk/assignment/${assignmentId}/status`,
+        { status },
+        API_CONFIG.MAIN_API
+      );
+      
+      if (response.success) {
+        console.log(`✅ Estado cambiado a ${status} exitosamente`);
+        return true;
+      } else {
+        console.error('❌ Error cambiando estado:', response.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error en updateStatus:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verificar si una asignación debe iniciarse automáticamente
+   * Retorna true si la hora actual >= start_time
+   */
+  shouldStartAssignment(assignment: AssignmentItem): boolean {
+    if (assignment.assignment.status !== 'scheduled') return false;
+
+    const now = new Date();
+    const [hours, minutes] = assignment.schedule.start_time.split(':').map(Number);
+    
+    const startTime = new Date();
+    startTime.setHours(hours, minutes, 0, 0);
+
+    return now >= startTime;
+  }
+
+  /**
+   * Verificar si una asignación debe finalizarse automáticamente
+   * Retorna true si la hora actual >= end_time
+   */
+  shouldFinishAssignment(assignment: AssignmentItem): boolean {
+    if (assignment.assignment.status !== 'active') return false;
+
+    const now = new Date();
+    const [hours, minutes] = assignment.schedule.end_time.split(':').map(Number);
+    
+    const endTime = new Date();
+    endTime.setHours(hours, minutes, 0, 0);
+
+    return now >= endTime;
+  }
+
+  /**
+   * Procesar inicio/fin automático de asignaciones
+   * Retorna true si hubo algún cambio
+   */
+  async processAutoStatusChanges(assignments: AssignmentItem[]): Promise<boolean> {
+    let hasChanges = false;
+
+    for (const assignment of assignments) {
+      // Verificar si debe iniciarse
+      if (this.shouldStartAssignment(assignment)) {
+        console.log(`⏰ Iniciando asignación automáticamente: ${assignment.zone.name}`);
+        const success = await this.updateStatus(assignment.assignment.id, 'active');
+        if (success) {
+          hasChanges = true;
+          // Mostrar alerta aquí para evitar duplicados
+          alert(`🎉 Tu asignación en ${assignment.zone.name} ha iniciado automáticamente`);
+        }
+      }
+
+      // Verificar si debe finalizarse
+      if (this.shouldFinishAssignment(assignment)) {
+        console.log(`⏰ Finalizando asignación automáticamente: ${assignment.zone.name}`);
+        const success = await this.updateStatus(assignment.assignment.id, 'finished');
+        if (success) {
+          hasChanges = true;
+          // Mostrar alerta aquí para evitar duplicados
+          alert(`⏹️ Tu asignación en ${assignment.zone.name} ha finalizado automáticamente`);
+        }
+      }
+    }
+
+    return hasChanges;
+  }
 }
 
 export default new AssignmentService();

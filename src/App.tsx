@@ -105,7 +105,18 @@ function App() {
       }
 
       // Obtener todas las asignaciones del día
-      const assignments = await assignmentService.getCurrent();
+      let assignments = await assignmentService.getCurrent();
+      
+      // NUEVO: Procesar cambios automáticos al cargar (por si inician sesión tarde)
+      console.log('⏰ Verificando cambios automáticos de estado al iniciar...');
+      const hasAutoChanges = await assignmentService.processAutoStatusChanges(assignments);
+      
+      // Si hubo cambios, recargar asignaciones
+      if (hasAutoChanges) {
+        console.log('🔄 Recargando asignaciones después de cambios automáticos...');
+        assignments = await assignmentService.getCurrent();
+      }
+      
       setAllAssignments(assignments);
       console.log('✅ Asignaciones cargadas:', assignments.length);
 
@@ -318,18 +329,27 @@ function App() {
         
         // Obtener todas las asignaciones
         const assignments = await assignmentService.getCurrent();
-        setAllAssignments(assignments);
+        
+        // NUEVO: Procesar cambios automáticos de estado (inicio/fin)
+        const hasAutoChanges = await assignmentService.processAutoStatusChanges(assignments);
+        
+        // Si hubo cambios automáticos, recargar asignaciones
+        const finalAssignments = hasAutoChanges 
+          ? await assignmentService.getCurrent() 
+          : assignments;
+        
+        setAllAssignments(finalAssignments);
         
         // Detectar nuevas asignaciones agregadas
-        if (assignments.length > previousAllCount) {
-          const newCount = assignments.length - previousAllCount;
+        if (finalAssignments.length > previousAllCount) {
+          const newCount = finalAssignments.length - previousAllCount;
           console.log(`🆕 ${newCount} nueva(s) asignación(es) agregada(s)`);
           alert(`🆕 Se agregaron ${newCount} nueva(s) asignación(es) a tu día`);
         }
         
         // Detectar asignaciones canceladas/removidas
-        if (assignments.length < previousAllCount) {
-          const removedCount = previousAllCount - assignments.length;
+        if (finalAssignments.length < previousAllCount) {
+          const removedCount = previousAllCount - finalAssignments.length;
           console.log(`🗑️ ${removedCount} asignación(es) cancelada(s)`);
           alert(`⚠️ Se cancelaron ${removedCount} asignación(es) de tu día`);
         }
@@ -340,14 +360,20 @@ function App() {
         if (activeAssignment) {
           // Si la asignación activa cambió o se activó una que estaba programada
           if (previousActiveId !== activeAssignment.assignment.id) {
-            if (previousScheduledId === activeAssignment.assignment.id) {
-              // Una programada se activó
-              console.log('🎉 Asignación programada ahora ACTIVA:', activeAssignment.zone.name);
-              alert(`🎉 Tu asignación programada en ${activeAssignment.zone.name} está ahora ACTIVA`);
+            // Solo mostrar alerta si NO hubo cambios automáticos
+            // (si hubo cambios automáticos, ya se mostró la alerta en processAutoStatusChanges)
+            if (!hasAutoChanges) {
+              if (previousScheduledId === activeAssignment.assignment.id) {
+                // Una programada se activó
+                console.log('🎉 Asignación programada ahora ACTIVA:', activeAssignment.zone.name);
+                alert(`🎉 Tu asignación programada en ${activeAssignment.zone.name} está ahora ACTIVA`);
+              } else {
+                // Nueva asignación activa diferente
+                console.log('🎉 Nueva asignación activa detectada:', activeAssignment.zone.name);
+                alert(`🎉 Tu asignación en ${activeAssignment.zone.name} está ahora ACTIVA`);
+              }
             } else {
-              // Nueva asignación activa diferente
-              console.log('🎉 Nueva asignación activa detectada:', activeAssignment.zone.name);
-              alert(`🎉 Tu asignación en ${activeAssignment.zone.name} está ahora ACTIVA`);
+              console.log('ℹ️ Cambio de asignación detectado (ya notificado por cambio automático)');
             }
           }
           
@@ -365,13 +391,18 @@ function App() {
           }
         } else if (previousActiveId) {
           // La asignación activa terminó o fue cancelada
-          console.log('⏹️ Asignación activa finalizada o cancelada');
-          alert('⏹️ Tu asignación activa ha finalizado');
+          // Solo mostrar alerta si NO hubo cambios automáticos (ya se mostró)
+          if (!hasAutoChanges) {
+            console.log('⏹️ Asignación activa finalizada o cancelada');
+            alert('⏹️ Tu asignación activa ha finalizado');
+          } else {
+            console.log('ℹ️ Asignación finalizada (ya notificado por cambio automático)');
+          }
           setCurrentAssignment(null);
           setZonePolygon(null);
           
           // Buscar próxima programada más cercana
-          const scheduled = assignments.filter(a => a.assignment.status === 'scheduled');
+          const scheduled = finalAssignments.filter(a => a.assignment.status === 'scheduled');
           if (scheduled.length > 0) {
             // Ordenar por hora de inicio (schedule.start_time)
             const sortedByTime = scheduled.sort((a, b) => {
@@ -402,7 +433,7 @@ function App() {
           }
         } else {
           // No hay activa, buscar próxima programada más cercana
-          const scheduled = assignments.filter(a => a.assignment.status === 'scheduled');
+          const scheduled = finalAssignments.filter(a => a.assignment.status === 'scheduled');
           if (scheduled.length > 0) {
             const sortedByTime = scheduled.sort((a, b) => {
               const timeA = a.schedule.start_time;
