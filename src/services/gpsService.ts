@@ -11,7 +11,7 @@ export interface GPSPosition {
   id: string; // inspector_id
   name: string; // solo nombres del inspector
   last_name: string; // apellidos del inspector
-  descripcion?: string; // Descripción del inspector (campo futuro del backend)
+  descripcion: string | null; // Descripción del inspector (campo futuro del backend, null si no existe)
   id_zone: string;
   name_zone: string;
   inspector_type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta'
@@ -120,7 +120,7 @@ class GPSService {
         id: inspectorId,
         name: inspector.name || 'Sin nombre',
         last_name: inspector.last_name || 'Sin apellido',
-        descripcion: inspector.descripcion, // Campo futuro del backend
+        descripcion: inspector.descripcion || null, // Campo futuro del backend, null si no existe
         id_zone: assignmentDetails?.zone?.id || 'sin-asignacion',
         name_zone: assignmentDetails?.zone?.name || 'Sin asignación',
         inspector_type: inspector.type || 'punto_fijo', // Enviar tal cual viene del backend
