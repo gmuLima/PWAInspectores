@@ -14,6 +14,7 @@ export interface InspectorData {
   email?: string;
   phone?: string;
   type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta' (mapeado desde inspector_type)
+  descripcion?: string; // Descripción del inspector (campo futuro del backend)
   zone_id?: string;
   zone_name?: string;
   created_at?: string;
@@ -26,6 +27,7 @@ interface InspectorAPIResponse {
   last_name: string;
   dni?: string;
   inspector_type: string; // Campo real del API
+  descripcion?: string; // Descripción del inspector (campo futuro del backend)
   device_id?: string;
   session_valid?: boolean;
   authenticated_at?: string;
@@ -51,6 +53,7 @@ class InspectorService {
       last_name: response.last_name,
       dni: response.dni,
       type: response.inspector_type, // Mapear inspector_type a type
+      descripcion: response.descripcion, // Campo futuro del backend
       email: undefined,
       phone: undefined,
       zone_id: undefined,

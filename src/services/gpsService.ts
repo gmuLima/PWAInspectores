@@ -11,6 +11,7 @@ export interface GPSPosition {
   id: string; // inspector_id
   name: string; // solo nombres del inspector
   last_name: string; // apellidos del inspector
+  descripcion?: string; // Descripción del inspector (campo futuro del backend)
   id_zone: string;
   name_zone: string;
   inspector_type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta'
@@ -21,6 +22,7 @@ export interface GPSPosition {
   is_logout: boolean; // true cuando se envía antes de logout, false en envíos normales
   schedule_id: string; // ID del turno/horario
   schedule_name: string; // Nombre del turno/horario
+  type_os: string; // 'windows', 'ios', 'android', 'macos', 'linux', 'unknown'
   latitude: number;
   longitude: number;
   timestamp: string; // ISO-8601
@@ -29,6 +31,41 @@ export interface GPSPosition {
 class GPSService {
   private trackingInterval: number | null = null;
   private lastPosition: GPSPosition | null = null;
+
+  /**
+   * Detectar sistema operativo del dispositivo
+   */
+  private detectOS(): string {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const platform = navigator.platform?.toLowerCase() || '';
+
+    // Detectar iOS (iPhone, iPad, iPod)
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+      return 'ios';
+    }
+
+    // Detectar Android
+    if (/android/.test(userAgent)) {
+      return 'android';
+    }
+
+    // Detectar Windows
+    if (/win/.test(platform) || /windows/.test(userAgent)) {
+      return 'windows';
+    }
+
+    // Detectar macOS
+    if (/mac/.test(platform) && !/iphone|ipad|ipod/.test(userAgent)) {
+      return 'macos';
+    }
+
+    // Detectar Linux
+    if (/linux/.test(platform) || /linux/.test(userAgent)) {
+      return 'linux';
+    }
+
+    return 'unknown';
+  }
 
   /**
    * Obtener nivel de batería del dispositivo
@@ -83,6 +120,7 @@ class GPSService {
         id: inspectorId,
         name: inspector.name || 'Sin nombre',
         last_name: inspector.last_name || 'Sin apellido',
+        descripcion: inspector.descripcion, // Campo futuro del backend
         id_zone: assignmentDetails?.zone?.id || 'sin-asignacion',
         name_zone: assignmentDetails?.zone?.name || 'Sin asignación',
         inspector_type: inspector.type || 'punto_fijo', // Enviar tal cual viene del backend
@@ -93,6 +131,7 @@ class GPSService {
         is_logout: isLogout,
         schedule_id: assignmentDetails?.schedule?.id || null,
         schedule_name: assignmentDetails?.schedule?.name || null,
+        type_os: this.detectOS(),
         latitude,
         longitude,
         timestamp: new Date().toISOString(),
