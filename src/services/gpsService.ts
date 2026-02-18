@@ -14,7 +14,7 @@ export interface GPSPosition {
   descripcion: string | null; // Descripción del inspector (campo futuro del backend, null si no existe)
   id_zone: string;
   name_zone: string;
-  inspector_type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta'
+  inspector_type: string; // 'punto_fijo', 'motorizado', 'bicicleta', 'operaciones', 'supervisor', 'general'
   assignment_id: string | null; // ID de la asignación actual (puede ser null)
   batery: string; // porcentaje 0-100
   velocidad: string; // en km/h
@@ -36,50 +36,70 @@ class GPSService {
    * Detectar sistema operativo del dispositivo
    */
   private detectOS(): string {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const platform = navigator.platform?.toLowerCase() || '';
+    const userAgent = navigator.userAgent;
+    const platform = (navigator.platform || '').toLowerCase();
 
-    // Detectar iOS (iPhone, iPad, iPod)
-    if (/iphone|ipad|ipod/.test(userAgent)) {
+    console.log('🔍 Detectando OS - UserAgent:', userAgent);
+    console.log('🔍 Detectando OS - Platform:', platform);
+
+    // Detectar iOS (iPhone, iPad, iPod) - PRIMERO para dispositivos móviles
+    // Incluir detección moderna para iPad en iOS 13+
+    if (/iPad|iPhone|iPod/.test(userAgent) || 
+        (platform === 'macintel' && navigator.maxTouchPoints > 1)) {
+      console.log('✅ OS detectado: ios');
       return 'ios';
     }
 
     // Detectar Android
-    if (/android/.test(userAgent)) {
+    if (/Android/.test(userAgent)) {
+      console.log('✅ OS detectado: android');
       return 'android';
     }
 
     // Detectar Windows
-    if (/win/.test(platform) || /windows/.test(userAgent)) {
+    if (/win/.test(platform) || /Windows/.test(userAgent)) {
+      console.log('✅ OS detectado: windows');
       return 'windows';
     }
 
-    // Detectar macOS
-    if (/mac/.test(platform) && !/iphone|ipad|ipod/.test(userAgent)) {
+    // Detectar macOS (escritorio)
+    if (/mac/.test(platform) && navigator.maxTouchPoints <= 1) {
+      console.log('✅ OS detectado: macos');
       return 'macos';
     }
 
     // Detectar Linux
-    if (/linux/.test(platform) || /linux/.test(userAgent)) {
+    if (/linux/.test(platform) || /Linux/.test(userAgent)) {
+      console.log('✅ OS detectado: linux');
       return 'linux';
     }
 
+    console.log('⚠️ OS no detectado, usando: unknown');
     return 'unknown';
   }
 
   /**
    * Obtener nivel de batería del dispositivo
+   * Nota: Safari/iOS no soporta Battery API por privacidad
    */
   private async getBatteryLevel(): Promise<string> {
     try {
+      // Battery API no disponible en Safari/iOS
       if ('getBattery' in navigator) {
         const battery: any = await (navigator as any).getBattery();
-        return Math.round(battery.level * 100).toString();
+        const level = Math.round(battery.level * 100);
+        console.log('🔋 Nivel de batería detectado:', level + '%');
+        return level.toString();
+      } else {
+        console.warn('🔋 Battery API no disponible (Safari/iOS)');
       }
     } catch (error) {
-      console.warn('Battery API no disponible');
+      console.warn('🔋 Error obteniendo batería:', error);
     }
-    return '100'; // default
+    
+    // Valor por defecto cuando no está disponible
+    console.log('🔋 Usando valor por defecto: 100%');
+    return '100';
   }
 
   /**

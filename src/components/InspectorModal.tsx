@@ -7,7 +7,7 @@ interface InspectorModalProps {
   inspectorName: string;
   location: { lat: number; lng: number; accuracy: number; timestamp: number } | null;
   isActive: boolean;
-  inspectorType?: 'punto_fijo' | 'fiscalizador' | 'motorizado' | 'bicicleta';
+  inspectorType?: 'punto_fijo' | 'motorizado' | 'bicicleta' | 'operaciones' | 'supervisor' | 'general';
   dni?: string;
   zone?: string;
   email?: string;
@@ -80,8 +80,10 @@ export function InspectorModal({
                     console.log('🔍 Tipo procesado:', type);
                     if (type === 'motorizado') return '🏍️ Motorizado';
                     if (type === 'punto_fijo') return '🚗 Punto Fijo';
-                    if (type === 'fiscalizador') return '👮 Fiscalizador';
                     if (type === 'bicicleta') return '🚴 Bicicleta';
+                    if (type === 'operaciones') return '👔 Operaciones';
+                    if (type === 'supervisor') return '👨‍💼 Supervisor';
+                    if (type === 'general') return '👮 General';
                     return `N/A (${inspectorType})`;
                   })()}
                 </span>

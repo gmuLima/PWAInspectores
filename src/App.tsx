@@ -83,12 +83,23 @@ function App() {
     };
     monitorBattery();
 
+    // Desconectar LiveKit al cerrar la página
+    const handleBeforeUnload = () => {
+      if (isLiveKitConnected) {
+        livekitService.disconnect();
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     // Limpiar alertas al desmontar
     return () => {
       stopTracking();
       if (isGpsTracking) {
         gpsService.stopTracking();
       }
+      // Desconectar LiveKit al desmontar componente
+      livekitService.disconnect();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
@@ -542,7 +553,13 @@ function App() {
 
     console.log('📍 Ubicación actualizada en App:', location);
 
-    if (!zonePolygon) return;
+    if (!zonePolygon) {
+      // Si no hay zona asignada, resetear el estado de fuera de zona
+      if (isOutOfZone) {
+        setIsOutOfZone(false);
+      }
+      return;
+    }
 
     const point = { latitude: location.lat, longitude: location.lng };
     const outOfZone = !isPointInsidePolygon(point, zonePolygon);
@@ -958,14 +975,14 @@ function App() {
         <div
           style={{
             position: 'fixed',
-            top: '80px',
+            top: '90px',
             left: '10px',
             right: '10px',
             padding: '12px',
             backgroundColor: '#dc2626',
             color: 'white',
             borderRadius: '8px',
-            zIndex: 100,
+            zIndex: 998,
             textAlign: 'center',
             fontWeight: 'bold',
             fontSize: '14px',

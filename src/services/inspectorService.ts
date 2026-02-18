@@ -13,7 +13,7 @@ export interface InspectorData {
   dni?: string;
   email?: string;
   phone?: string;
-  type: string; // 'punto_fijo', 'fiscalizador', 'motorizado', 'bicicleta' (mapeado desde inspector_type)
+  type: string; // 'punto_fijo', 'motorizado', 'bicicleta', 'operaciones', 'supervisor', 'general' (mapeado desde inspector_type)
   descripcion?: string; // Descripción del inspector (campo futuro del backend)
   zone_id?: string;
   zone_name?: string;
